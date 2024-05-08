@@ -1,227 +1,202 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import { StatusBar } from 'expo-status-bar';
-import { CachedImage } from '../helpers/image';
+import React, { useState } from 'react';
+import { View, Text, Image, ScrollView,StyleSheet, TouchableOpacity } from 'react-native';
+import { ChevronLeftIcon, ClockIcon, FireIcon, HomeIcon } from 'react-native-heroicons/outline';
+import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
 import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-native-responsive-screen';
-import { ChevronLeftIcon, ClockIcon, FireIcon } from 'react-native-heroicons/outline';
 import {  HeartIcon, Square3Stack3DIcon, UsersIcon } from 'react-native-heroicons/solid';
-import { useNavigation } from '@react-navigation/native';
-import axios from 'axios';
-import Loading from '../components/loading';
-import YouTubeIframe from 'react-native-youtube-iframe';
+import catalogData from '../data/catalogData';
+import { Dimensions } from 'react-native';
+import Header from '../components/header';
+import {Linking} from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome'
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 
+const RecipeDetailScreen = ({ route }) => {
 
-export default function RecipeDetailScreen(props) {
-    let item = props.route.params;
-    const [isFavourite, setIsFavourite] = useState(false);
-    const navigation = useNavigation();
-    const [meal, setMeal] = useState(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(()=>{
-        getMealData(item.idMeal);
-    },[])
-
-    const getMealData = async (id)=>{
-        try{
-          const response = await axios.get(`https://themealdb.com/api/json/v1/1/lookup.php?i=${id}`);
-        //   console.log('got meal data: ',response.data);
-          if(response && response.data){
-            setMeal(response.data.meals[0]);
-            setLoading(false);
-          }
-        }catch(err){
-          console.log('error: ',err.message);
+    handleConsultation = (contactMethod) => {
+        if (contactMethod === 'whatsapp') {
+          Linking.openURL(`whatsapp://send?phone=${'+6285761088663'}`);
+        } else if (contactMethod === 'email') {
+          Linking.openURL('mailto:lumbangaoltway616@gmail.com');
         }
-    }
+      };
 
-    const ingredientsIndexes = (meal)=>{
-        if(!meal) return [];
-        let indexes = [];
-        for(let i = 1; i<=20; i++){
-            if(meal['strIngredient'+i]){
-                indexes.push(i);
-            }
-        }
+  const navigation = useNavigation(); // Gunakan hook useNavigation untuk mendapatkan objek navigasi
+  
+  const [isFavourite, setIsFavourite] = useState(false); // State untuk menangani status favorit
 
-        return indexes;
-    }
+  if (!route.params || !route.params.recipe) {
+    console.error('Parameter recipe tidak tersedia!');
+    return null;
+  }
+  
+  const { recipe } = route.params;
 
-    const getYoutubeVideoId = url=>{
-        const regex = /[?&]v=([^&]+)/;
-        const match = url.match(regex);
-        if (match && match[1]) {
-          return match[1];
-        }
-        return null;
-    }
+  if (!recipe || !recipe.id) {
+    console.error('Data resep tidak lengkap atau tidak memiliki ID!');
+    return null;
+  }
+
+  const selectedRecipe = catalogData.find(item => item.id === recipe.id);
+
+  if (!selectedRecipe) {
+    console.error('Resep dengan ID yang diberikan tidak ditemukan!');
+    return null;
+  }
+
+  const windowHeight = Dimensions.get('window').height;
 
   return (
+    <View style={{ flex: 1 }}>
+    {/* Scrollable Content */}
     <ScrollView
-        className="bg-white flex-1"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{paddingBottom: 30}}
+      style={{ flex: 1 }}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingBottom: hp(10) }} // Adjust paddingBottom to accommodate the static header
     >
-      <StatusBar style={"light"} />
-      {/* recipe image */}
-      <View className="flex-row justify-center">
-        <CachedImage
-            uri={item.strMealThumb}
-            sharedTransitionTag={item.strMeal}
-            style={{width: wp(98), height: hp(50), borderRadius: 53, borderBottomLeftRadius: 40, borderBottomRightRadius: 40, marginTop: 4}}
-        />
-      </View>
-
-      {/* back button */}
-      <Animated.View entering={FadeIn.delay(200).duration(1000)} className="w-full absolute flex-row justify-between items-center pt-14">
-        <TouchableOpacity onPress={()=> navigation.goBack()} className="p-2 rounded-full ml-5 bg-white">
-            <ChevronLeftIcon size={hp(3.5)} strokeWidth={4.5} color="#fbbf24" />
+      {/* Recipe image */}
+      <Image
+        source={selectedRecipe.imgUrl}
+        style={{ width: '100%', height: windowHeight * 0.5, borderBottomLeftRadius: 20, borderBottomRightRadius: 20 }}
+      />
+      {/* Back button */}
+      <Animated.View entering={FadeIn.delay(200).duration(1000)} className="w-full absolute flex-row justify-between items-center pt-12">
+        <TouchableOpacity  onPress={()=> navigation.goBack()} className="p-2 rounded-full ml-5" style={{backgroundColor: '#1B3C73'}}>
+            <ChevronLeftIcon  size={hp(3.5)} strokeWidth={4.5} color="#ffff" />
         </TouchableOpacity>
         <TouchableOpacity onPress={()=> setIsFavourite(!isFavourite)} className="p-2 rounded-full mr-5 bg-white">
-            <HeartIcon size={hp(3.5)} strokeWidth={4.5} color={isFavourite? "red": "gray"} />
+            <HeartIcon size={hp(3.5)} strokeWidth={4.5} color={isFavourite? "#1B3C73": "gray"} />
         </TouchableOpacity>
       </Animated.View>
 
-      {/* meal description */}
-      {
-        loading? (
-            <Loading size="large" className="mt-16" />
-        ):(
-            <View className="px-4 flex justify-between space-y-4 pt-8">
-                {/* name and area */}
-                <Animated.View entering={FadeInDown.duration(700).springify().damping(12)} className="space-y-2">
-                    <Text style={{fontSize: hp(3)}} className="font-bold flex-1 text-neutral-700">
-                        {meal?.strMeal}
-                    </Text>
-                    <Text style={{fontSize: hp(2)}} className="font-medium flex-1 text-neutral-500">
-                        {meal?.strArea}
-                    </Text>
-                </Animated.View>
+      <View className="px-4 flex justify-between space-y-4 pt-8"
+      style={{marginTop: hp(-2)}}
+      >
+        {/* name and area */}
+        <Animated.View entering={FadeInDown.duration(700).springify().damping(12)} className=" flex-row justify-between items-center ">
+            <View>
+                <Text style={{fontSize: hp(3)}} className="font-bold flex-1 text-neutral-700">
+                {selectedRecipe.title}
+                </Text>
+                <Text style={{fontSize: hp(2)}} className="font-medium flex-1 text-neutral-500">
+                {selectedRecipe.production}
+                </Text>
+            </View >
+            
+            {/* <View className="mr-4">
+            <Text
+                style={{fontSize: hp(3), textDecorationLine: 'none', cursor: 'pointer'}}
+                className="font-bold text-gray-700 bg-green-400 p-2 rounded-lg"
+                onPress={() => {
+                    const phoneNumber = '+6285761088663';
+                    Linking.openURL(`whatsapp://send?phone=${phoneNumber}`);
+                }}
+            >
+                <Icon name="whatsapp" size={28} color="#fff" /> 
+            </Text>
+            </View> */}
+        </Animated.View>
 
-                {/* misc */}
-                <Animated.View entering={FadeInDown.delay(100).duration(700).springify().damping(12)} className="flex-row justify-around">
-                    <View className="flex rounded-full bg-amber-300 p-2">
-                        <View 
-                            style={{height: hp(6.5), width: hp(6.5)}}
-                            className="bg-white rounded-full flex items-center justify-center"
-                        >
-                            <ClockIcon size={hp(4)} strokeWidth={2.5} color="#525252" />
-                        </View>
-                        <View className="flex items-center py-2 space-y-1">
-                            <Text style={{fontSize: hp(2)}} className="font-bold text-neutral-700">
-                                35
-                            </Text>
-                            <Text style={{fontSize: hp(1.3)}} className="font-bold text-neutral-700">
-                                Mins
-                            </Text>
-                        </View>
-                    </View>
-                    <View className="flex rounded-full bg-amber-300 p-2">
-                        <View 
-                            style={{height: hp(6.5), width: hp(6.5)}}
-                            className="bg-white rounded-full flex items-center justify-center"
-                        >
-                            <UsersIcon size={hp(4)} strokeWidth={2.5} color="#525252" />
-                        </View>
-                        <View className="flex items-center py-2 space-y-1">
-                            <Text style={{fontSize: hp(2)}} className="font-bold text-neutral-700">
-                                03
-                            </Text>
-                            <Text style={{fontSize: hp(1.3)}} className="font-bold text-neutral-700">
-                                Servings
-                            </Text>
-                        </View>
-                    </View>
-                    <View className="flex rounded-full bg-amber-300 p-2">
-                        <View 
-                            style={{height: hp(6.5), width: hp(6.5)}}
-                            className="bg-white rounded-full flex items-center justify-center"
-                        >
-                            <FireIcon size={hp(4)} strokeWidth={2.5} color="#525252" />
-                        </View>
-                        <View className="flex items-center py-2 space-y-1">
-                            <Text style={{fontSize: hp(2)}} className="font-bold text-neutral-700">
-                                103
-                            </Text>
-                            <Text style={{fontSize: hp(1.3)}} className="font-bold text-neutral-700">
-                                Cal
-                            </Text>
-                        </View>
-                    </View>
-                    <View className="flex rounded-full bg-amber-300 p-2">
-                        <View 
-                            style={{height: hp(6.5), width: hp(6.5)}}
-                            className="bg-white rounded-full flex items-center justify-center"
-                        >
-                            <Square3Stack3DIcon size={hp(4)} strokeWidth={2.5} color="#525252" />
-                        </View>
-                        <View className="flex items-center py-2 space-y-1">
-                            <Text style={{fontSize: hp(2)}} className="font-bold text-neutral-700">
-                                
-                            </Text>
-                            <Text style={{fontSize: hp(1.3)}} className="font-bold text-neutral-700">
-                                Easy
-                            </Text>
-                        </View>
-                    </View>
-                </Animated.View>
+        {/* price product */}
+        <Animated.View entering={FadeInDown.duration(700).springify().damping(12)} className=" flex-row justify-between items-center ">
+            <Text style={{fontSize: hp(3)}} className="font-bold flex-1 text-neutral-700">
+                {/* {meal?.strMeal} */}
+                Rp.{selectedRecipe.price}
+            </Text>
+            <Text style={{fontSize: hp(2)}} className="mr-4 text-red-600 font-bold">
+                {/* {meal?.strMeal} */}
+                {'Tersedia'}
+            </Text>
+        </Animated.View>
 
-                {/* ingredients */}
-                <Animated.View entering={FadeInDown.delay(200).duration(700).springify().damping(12)} className="space-y-4">
-                    <Text style={{fontSize: hp(2.5)}} className="font-bold flex-1 text-neutral-700">
-                        Ingredients
-                    </Text>
-                    <View className="space-y-2 ml-3">
-                        {
-                            ingredientsIndexes(meal).map(i=>{
-                                return (
-                                    <View key={i} className="flex-row space-x-4">
-                                        <View style={{height: hp(1.5), width: hp(1.5)}}
-                                            className="bg-amber-300 rounded-full" />
-                                        <View className="flex-row space-x-2">
-                                                <Text style={{fontSize: hp(1.7)}} className="font-extrabold text-neutral-700">{meal['strMeasure'+i]}</Text>
-                                                <Text style={{fontSize: hp(1.7)}} className="font-medium text-neutral-600">{meal['strIngredient'+i]}</Text>
-                                        </View>
-                                    </View>
-                                )
-                            })
-                        }
-                    </View>
-                </Animated.View>
-                {/* instructions */}
-                <Animated.View entering={FadeInDown.delay(300).duration(700).springify().damping(12)} className="space-y-4">
-                    <Text style={{fontSize: hp(2.5)}} className="font-bold flex-1 text-neutral-700">
-                        Instructions
-                    </Text>
-                    <Text style={{fontSize: hp(1.6)}} className="text-neutral-700">
-                        {
-                            meal?.strInstructions
-                        }
-                    </Text>
-                </Animated.View>
-
-                {/* recipe video */}
-                {
-                    meal.strYoutube && (
-                        <Animated.View entering={FadeInDown.delay(400).duration(700).springify().damping(12)} className="space-y-4">
-                            <Text style={{fontSize: hp(2.5)}} className="font-bold flex-1 text-neutral-700">
-                                Recipe Video
-                            </Text>
-                            <View>
-                                <YouTubeIframe
-                                    videoId={getYoutubeVideoId(meal.strYoutube)}
-                                    height={hp(30)}
-                                />
-                            </View>
-                        </Animated.View>
-                    )
-                }
-
-
+        {/* misc */}
+        <Animated.View entering={FadeInDown.delay(100).duration(700).springify().damping(12)} className="flex-row justify-around px">
+        {/* misc */}
+          <View style={{ flexDirection: 'row',backgroundColor:'#B5C0D0', justifyContent: 'space-around', marginTop: hp(2),paddingHorizontal: 20,borderColor:'#fff', borderWidth:1,borderRadius:10 }}>
+            <View style={{borderRadius: 9999, padding: hp(1.5) }}>
+              <HomeIcon size={hp(4)} strokeWidth={2.5} color="#1B3C73" />
+              <Text style={{ fontSize: hp(1.3), fontWeight: 'bold', color: '#000' }}>Cosmos Seraya</Text>
             </View>
-        )
-      }
-    </ScrollView>
-  )
-}
+            <View style={{borderRadius: 9999, padding: hp(1.5) }}>
+              <UsersIcon size={hp(4)} strokeWidth={2.5} color="gray" />
+              <Text style={{ fontSize: hp(1.5), fontWeight: 'bold', color: '#000' }}>kido-kids Seraya</Text>
+            </View>
+            <View style={{borderRadius: 9999, padding: hp(1.5) }}>
+              <Square3Stack3DIcon size={hp(4)} strokeWidth={2.5} color="green" />
+              <Text style={{ fontSize: hp(1.6), fontWeight: 'bold', color: '#000' }}>Pavilion Seraya</Text>
+            </View>
+          </View>
+                </Animated.View>
+        {/* instructions */}
+        <Animated.View entering={FadeInDown.delay(300).duration(700).springify().damping(12)} className="space-y-4">
+            <Text style={{fontSize: hp(2.5)}} className="font-bold flex-1 text-neutral-700">
+                Deskription
+            </Text>
+            <Text style={{fontSize: hp(2.0)}} className="text-neutral-700">
+                {
+                    selectedRecipe.description
+                }
+            </Text>
+            <Text style={{ fontSize: 14, marginBottom: 10 }}>Categories : {selectedRecipe.technologies.join('')}</Text>
+        </Animated.View>
+         {/* picture */}
+         <Animated.View entering={FadeInDown.delay(300).duration(700).springify().damping(12)} className="space-y-4">
+                    <Text style={{fontSize: hp(2.5)}} className="font-bold flex-1 text-neutral-700">
+                        More Picture
+                    </Text>
+                    <View className="flex-column">
+                    <Animated.Image
+                        source={selectedRecipe.imgUrl}
+                        style={{
+                            width: wp(30),
+                            height: hp(20),
+                            margin: 4,
+                            marginTop: 2,
+                            borderColor: 'orange',
+                            borderWidth: 1,
+                            borderRadius: 10,
+                            // resizeMode: 'contain'
+                        }}
+                    />
+                    <Animated.Image
+                        source={selectedRecipe.images}
+                        style={{
+                            width: wp(92),
+                            height: hp(30),
+                            marginTop: 2,
+                            borderColor: '#0D9276',
+                            borderWidth: 1,
+                            borderRadius: 10,
+                            // resizeMode: 'contain'
+                        }}
+                    />
+                    <Animated.Image
+                        source={selectedRecipe.images2}
+                        style={{
+                            width: wp(92),
+                            height: hp(30),
+                            marginTop: 2,
+                            resizeMode: 'contain' 
+                        }}
+                    />
+
+                </View>
+            </Animated.View>
+            </View>
+        </ScrollView>
+        {/* Header */}
+        <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#fff', paddingVertical: 10, paddingHorizontal: 50, borderTopWidth: 3, borderTopColor: '#ccc', flexDirection: 'row', justifyContent: 'space-around' }}>
+        <TouchableOpacity onPress={() => this.handleConsultation('email')} style={{ backgroundColor: '#fff', paddingVertical: 12, paddingHorizontal: 24, borderRadius: 9999, borderWidth: 1, borderColor: 'red' }}>
+        <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#000' }}>Pesan Email</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => this.handleConsultation('whatsapp')} style={{ backgroundColor: '#0D9276',borderWidth: 1, borderColor: 'green' , paddingVertical: 12, paddingHorizontal: 24, borderRadius:200 }}>
+          <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#FBF6EE' }}>Whatsapp</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+
+export default RecipeDetailScreen;

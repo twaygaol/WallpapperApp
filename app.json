@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "ReactNativeUI",
-    "slug": "ReactNativeUI",
+    "name": "WallpapperApp",
+    "slug": "WallpapperApp",
+    "platforms": ["ios", "android"], 
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#00000"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -20,11 +20,17 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      }
+        "backgroundColor": "#FFFFFF"
+      },
+      "package": "com.twaygaol.WallpapperApp"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "a5a24419-b1e2-4590-be23-d527f058c174"
+      }
     }
   }
 }

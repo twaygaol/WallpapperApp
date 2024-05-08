@@ -21,7 +21,7 @@ export const CachedImage = (props) => {
               const reader = new FileReader();
               reader.readAsDataURL(imageBlob);
               reader.onloadend = () => {
-                resolve(reader.result);
+                resolve(reader.result); 
               };
             });
             await AsyncStorage.setItem(uri, base64Data);

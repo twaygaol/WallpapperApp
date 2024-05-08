@@ -1,49 +1,46 @@
-import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native'
-import React from 'react'
-import {categoryData} from '../constants'
-import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-native-responsive-screen';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-import { CachedImage } from '../helpers/image';
+import React from 'react';
+import { View, StyleSheet, FlatList,Text, Image } from 'react-native';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import catalogData from '../data/catalogData';
 
-export default function Categories({categories, activeCategory, handleChangeCategory}) {
+export default function Categories() {
   return (
-    <Animated.View entering={FadeInDown.duration(500).springify()}>
-      <ScrollView
+    <View style={styles.container}>
+      <Text style={{ fontSize: hp(2.5),marginLeft: 15, fontWeight: '600', color: '#4B5563', marginBottom: hp(2) }}>Offers for you</Text>
+      <FlatList
+        data={catalogData}
         horizontal
         showsHorizontalScrollIndicator={false}
-        className="space-x-4"
-        contentContainerStyle={{paddingHorizontal: 15}}
-      >
-        {
-            categories.map((cat, index)=>{
-                let isActive = cat.strCategory==activeCategory;
-                let activeButtonClass = isActive? ' bg-amber-400': ' bg-black/10';
-                return (
-                    <TouchableOpacity
-                        key={index}
-                        onPress={()=> handleChangeCategory(cat.strCategory)}
-                        className="flex items-center space-y-1"
-                    >
-                        <View className={"rounded-full p-[6px] "+activeButtonClass}>
-                            {/* <Image
-                                source={{uri: cat.strCategoryThumb}}
-                                style={{width: hp(6), height: hp(6)}}
-                                className="rounded-full"
-                            /> */}
-                            <CachedImage
-                                uri={cat.strCategoryThumb}
-                                style={{width: hp(6), height: hp(6)}}
-                                className="rounded-full"
-                            />
-                        </View>
-                        <Text className="text-neutral-600" style={{fontSize: hp(1.6)}}>
-                            {cat.strCategory}
-                        </Text>
-                    </TouchableOpacity>
-                )
-            })
-        }
-      </ScrollView>
-    </Animated.View>
-  )
+        renderItem={({ item }) => (
+          <View style={styles.sliderItem}>
+            <Image source={item.slider} style={styles.sliderImage} />
+            <Image source={item.slider1} style={styles.sliderImage} />
+            <Image source={item.slider2} style={styles.sliderImage} />
+          </View>
+        )}
+        keyExtractor={(item, index) => index.toString()}
+        contentContainerStyle={styles.contentContainer} // Style untuk konten dalam FlatList
+      />
+    </View>
+  );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    marginTop: 15,
+  },
+  sliderItem: {
+    flexDirection: 'row', // Mengatur tata letak menjadi horizontal
+    marginRight: 20,
+    marginLeft: 15,
+  },
+  sliderImage: {
+    width: 270,
+    height: 150,
+    borderRadius: 15,
+    marginRight: 10, // Memberi ruang di antara gambar
+  },
+  contentContainer: {
+    paddingRight: 10, // Memberi ruang di sebelah kanan untuk sliderItem terakhir
+  },
+});
